@@ -1,9 +1,10 @@
 {
   "name": "tinyapp",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "main": "express_server.js",
   "scripts": {
+    "start": "./node_modules/.bin/nodemon -L express_server.js",
+
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -11,13 +12,18 @@
     "url": "git+https://github.com/ApamAa/tinyapp.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Apama",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/ApamAa/tinyapp/issues"
   },
   "homepage": "https://github.com/ApamAa/tinyapp#readme",
   "dependencies": {
+    "ejs": "^3.0.1",
     "express": "^4.17.1"
-  }
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.1"
+  },
+  "description": ""
 }
