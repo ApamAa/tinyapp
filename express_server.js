@@ -72,6 +72,16 @@ app.post('/urls/:shortURL/delete',(req, res) => {
    delete urlDatabase[req.params.shortURL];
   res.redirect("/urls")
 });
+app.post("/urls/:shortURL/update", (req, res) => {
+  let longUrl = req.body.editURL
+  urlDatabase[req.params.shortURL] = longUrl;
+  res.redirect('/urls');
+})
+app.post("/urls/:shortURL/edit", (req, res) => {
+  let shortUrl = req.params.shortURL
+  console.log('Edit: ', req.params.shortURL);
+  res.redirect(`/urls/${shortUrl}`);
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
