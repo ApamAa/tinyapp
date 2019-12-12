@@ -14,6 +14,18 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
 function generateRandomString(outputLength) {
   let result = '';
   let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -25,13 +37,24 @@ function generateRandomString(outputLength) {
 }
 
 
+function findUser(email) {
+  for (let user in users) {
+    if (users[user].email === email) {
+      return users[user].id;
+    }
+  }
+  return null;
+}
 
 app.get("/urls", (req, ren) => {
-  console.log(req.cookies.username);
+  
+  
+
   let templateVars = {
      urls: urlDatabase,
-     username: req.cookies["username"]
-  };
+     userobj: users[req.cookies["user_id"]]
+    };
+    console.log(req.cookies["user_id"])
   ren.render("urls_index", templateVars);
 });
   
@@ -52,19 +75,33 @@ app.get("/hello", (req, res) => {
 app.get("/urls/new", (req, res) => {
   let templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
+    userobj: users[req.cookies["user_id"]]
  };
   res.render("urls_new",templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],username: req.cookies['username']};
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
+    userobj: users[req.cookies["user_id"]]};
   res.render("urls_show", templateVars)
 });
 
 app.get("/u/:shortURL", (req, res) => {
   res.redirect(urlDatabase[req.params.shortURL])
 
+});
+app.get("/register", (req, res) => { //marhale avvale empliment
+  let templateVars = {
+    urls: urlDatabase,
+    userobj: users[req.cookies["user_id"]]
+ };
+  res.render("urls_register",templateVars);
+});
+app.get("/login", (req, res) => { //marhale avvale empliment
+  let templateVars = {
+    userobj: users[req.cookies["user_id"]]
+ };
+  res.render("login",templateVars);
 });
 
 app.post('/urls', (req, res) => {
@@ -88,14 +125,40 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   res.redirect(`/urls/${shortUrl}`);
 })
 app.post("/login", (req, res) => {
-  const username = req.body.username
-  res.cookie('username', username);
-  res.redirect('/urls');
+  email = req.body.email;
+  password = req.body.password;
+  id = findUser(email);
+  if (!id) {
+    res.send("status code 403 : user email is not registered ")
+  } else if(users[id].password === password) {
+    res.cookie("user_id", id);
+    res.redirect('/urls') 
+  } else {
+    res.send("status code :403");
+  }
 })
 app.post("/logout", (req, res) => {
-  //const username = req.body.username
-  res.clearCookie('username');
+  
+  res.clearCookie('user_id');
   res.redirect('/urls');
+})
+app.post("/register", (req, res) => { 
+  const email = req.body.email
+  const password = req.body.password;
+ 
+  const id = generateRandomString(10);
+  const findemail = findUser(email);
+   if (email !== "" && password !== "" && !findemail) {
+    let userobj = {id: id, email: email, password: password};
+    users[id] = userobj;
+    
+    res.cookie('user_id',id);
+    res.redirect('/urls');
+    console.log(res.cookies);
+  } else {
+    res.send("Error : status code 400")
+
+  }
 })
 
 
