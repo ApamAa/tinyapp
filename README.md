@@ -4,9 +4,9 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["Log in page"](https://github.com/ApamAa/tinyapp/blob/master/docs/login_page.png)
-!["My URLS Page as seen for a logged in user"](https://github.com/ApamAa/tinyapp/blob/master/docs/my_urls_page.png)
-!["New URLS input page"](https://github.com/ApamAa/tinyapp/blob/master/docs/new_urls.png)
+["Log in page"](https://github.com/ApamAa/tinyapp/blob/master/docs/login_page.png)
+["My URLS Page as seen for a logged in user"](https://github.com/ApamAa/tinyapp/blob/master/docs/my_urls_page.png)
+["New URLS input page"](https://github.com/ApamAa/tinyapp/blob/master/docs/new_urls.png)
 
 ## Dependencies
 
