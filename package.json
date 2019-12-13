@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/ApamAa/tinyapp#readme",
   "dependencies": {
+    "bcrypt": "2.0.0",
     "cookie-parser": "^1.4.4",
     "ejs": "^3.0.1",
     "express": "^4.17.1"

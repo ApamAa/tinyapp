@@ -1,7 +1,10 @@
 const express = require("express");
 const cookieParser = require('cookie-parser')
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 8080; 
+const bcrypt = require('bcrypt');
+const password = "purple-monkey-dinosaur"; 
+const hashedPassword = bcrypt.hashSync(password, 10)
 app.use(cookieParser());
 
 
@@ -14,13 +17,7 @@ let urlDatabase = {
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 const urlDatabaseALL = urlDatabase;
-// /*
-// const urlDatabase = {
-  
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
-// */
+
 const users = { 
   "userRandomID": {
     id: "userRandomID", 
@@ -39,7 +36,7 @@ function generateRandomString(outputLength) {
   for (let i = 0; i < outputLength; i ++) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
-  console.log('six digit code: ', result);
+  
   return result;
 }
 
@@ -67,6 +64,7 @@ app.get("/urls", (req, res) => {
   
  
     if (typeof req.cookies["user_id"] !== 'undefined'){ 
+      
       let templateVars = {
       urls: urlsForUser(req.cookies["user_id"]),
       userobj: users[req.cookies["user_id"]]
@@ -108,7 +106,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  console.log()
+
   if (typeof req.cookies["user_id"] !== 'undefined'){
       userURLs = urlsForUser(req.cookies["user_id"]);
       if (typeof userURLs[req.params.shortURL] !== 'undefined') {
@@ -130,14 +128,14 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(urlDatabase[req.params.shortURL].longURL)
 
 });
-app.get("/register", (req, res) => { //marhale avvale empliment
+app.get("/register", (req, res) => { 
   let templateVars = {
     urls: urlDatabase,
     userobj: users[req.cookies["user_id"]]
  };
   res.render("urls_register",templateVars);
 });
-app.get("/login", (req, res) => { //marhale avvale empliment
+app.get("/login", (req, res) => {
   let templateVars = {
     userobj: users[req.cookies["user_id"]]
  };
@@ -146,7 +144,7 @@ app.get("/login", (req, res) => { //marhale avvale empliment
 
 app.post('/urls', (req, res) => {
   let newShortUrl = generateRandomString(6);
-  //res.redirect(`http://localhost:8080/urls/${newShortUrl}`);
+  
   res.redirect(`http://${req.body.longURL}`);
   urlDatabase[newShortUrl] = {longURL : 'http://' + req.body.longURL,
                               userID : req.cookies["user_id"]}                           
@@ -165,16 +163,16 @@ app.post("/urls/:shortURL/update", (req, res) => {
 app.post("/urls/:shortURL/edit", (req, res) => {
   urlDatabase = urlsForUser(req.cookies["user_id"]);
   let shortUrl = req.params.shortURL
-  console.log('Edit: ', req.params.shortURL);
+  
   res.redirect(`/urls/${shortUrl}`);
 })
 app.post("/login", (req, res) => {
   email = req.body.email;
-  password = req.body.password;
+  LogInPassword = req.body.password;
   id = findUser(email);
   if (!id) {
     res.send("status code 403 : user email is not registered ")
-  } else if(users[id].password === password) {
+  } else if(bcrypt.compareSync(LogInPassword, users[id].password)) {
     res.cookie("user_id", id);
     urlDatabase = urlsForUser(id);
     res.redirect('/urls') 
@@ -190,8 +188,8 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => { 
   const email = req.body.email
-  const password = req.body.password;
- 
+  const RegisteredPassword = req.body.password;
+  const password = bcrypt.hashSync(RegisteredPassword, 10);
   const id = generateRandomString(10);
   const findemail = findUser(email);
    if (email !== "" && password !== "" && !findemail) {
@@ -200,7 +198,7 @@ app.post("/register", (req, res) => {
     
     res.cookie('user_id',id);
     res.redirect('/urls');
-    console.log(res.cookies);
+    
   } else {
     res.send("Error : status code 400")
 
