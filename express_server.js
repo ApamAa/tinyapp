@@ -131,9 +131,13 @@ app.post('/urls', (req, res) => {
 });
 
 app.post('/urls/:shortURL/delete',(req, res) => {
+  if (typeof users[req.session.userId] !== "undefined") {
   urlDatabase = urlsForUser(req.session.userId);
   delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls");
+  res.redirect("/urls");}
+  else {
+    res.redirect('/login');
+  }
 });
 
 app.post("/urls/:shortURL/update", (req, res) => {
@@ -143,9 +147,13 @@ app.post("/urls/:shortURL/update", (req, res) => {
 });
 
 app.post("/urls/:shortURL/edit", (req, res) => {
+  if (typeof users[req.session.userId] !== "undefined") {
   urlDatabase = urlsForUser(req.session.userId);
   let shortUrl = req.params.shortURL;
-  res.redirect(`/urls/${shortUrl}`);
+  res.redirect(`/urls/${shortUrl}`);}
+  else{
+    res.redirect('/login');
+  }
 });
 
 app.post("/login", (req, res) => {
