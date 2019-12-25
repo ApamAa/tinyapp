@@ -1,5 +1,6 @@
+// initial set-up, package requiremnt, helper functions etc
 const express = require("express");
-const getUserByEmail = require('./helpers');
+const {getUserByEmail,urlsForUser,generateRandomString} = require('./helpers'); // requiring all the modules from helper file
 const cookieSession = require('cookie-session');
 const app = express();
 const PORT = 8080;
@@ -14,12 +15,14 @@ app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+// dummy urlDatabase
 let urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 const urlDatabaseALL = urlDatabase;
 
+// dummy user-database
 const users = {
   "userRandomID": {
     id: "userRandomID",
@@ -33,30 +36,12 @@ const users = {
   }
 };
 
-const generateRandomString = function(outputLength) {
-  let result = '';
-  let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < outputLength; i ++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-};
 
-const urlsForUser =  function(id) {
-  let filteredURLS = {};
-  for (let url in urlDatabase) {
-    if (urlDatabase[url].userID === id) {
-      filteredURLS[url] = urlDatabase[url];
-    }
-  }
-  return filteredURLS;
-};
-
+// post request to /urls 
 app.get("/urls", (req, res) => {
-  console.log(req.session.userId);
   if (typeof users[req.session.userId] !== "undefined") {
     let templateVars = {
-      urls: urlsForUser(req.session.userId),
+      urls: urlsForUser(req.session.userId,urlDatabase),
       userobj: users[req.session.userId]
     };
     res.render("urls_index", templateVars);
@@ -64,17 +49,19 @@ app.get("/urls", (req, res) => {
     res.redirect("/login");
   }
 });
-  
+
+// get request to home /
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (typeof users[req.session.userId] !== "undefined") {
+    res.redirect("/urls")
+  } else {
+   res.redirect("/login"); 
+  }
+  
 });
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.get("/urls/new", (req, res) => {
@@ -90,7 +77,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   if (typeof req.session.userId !== 'undefined') {
-    let userURLs = urlsForUser(req.session.userId);
+    let userURLs = urlsForUser(req.session.userId,urlDatabase);
     if (typeof userURLs[req.params.shortURL] !== 'undefined') {
       let templateVars = {shortURL : req.params.shortURL,
         longURL: urlDatabase[req.params.shortURL].longURL,
@@ -125,14 +112,14 @@ app.get("/login", (req, res) => {
 
 app.post('/urls', (req, res) => {
   let newShortUrl = generateRandomString(6);
-  res.redirect(`http://${req.body.longURL}`);
   urlDatabase[newShortUrl] = {longURL : 'http://' + req.body.longURL,
     userID : req.session.userId};
+    res.redirect(`/urls/${newShortUrl}`);
 });
 
 app.post('/urls/:shortURL/delete',(req, res) => {
   if (typeof users[req.session.userId] !== "undefined") {
-    urlDatabase = urlsForUser(req.session.userId);
+    urlDatabase = urlsForUser(req.session.userId,urlDatabase);
     delete urlDatabase[req.params.shortURL];
     res.redirect("/urls");
   } else {
@@ -141,14 +128,14 @@ app.post('/urls/:shortURL/delete',(req, res) => {
 });
 
 app.post("/urls/:shortURL/update", (req, res) => {
-  let longURL = req.body.editURL;
-  urlDatabase[req.params.shortURL] = {longUrl:longURL , userID : req.session.userId};
+  let longURL = 'http://' + req.body.editURL;
+  urlDatabase[req.params.shortURL] = {longURL:longURL , userID : req.session.userId};
   res.redirect('/urls');
 });
 
 app.post("/urls/:shortURL/edit", (req, res) => {
   if (typeof users[req.session.userId] !== "undefined") {
-    urlDatabase = urlsForUser(req.session.userId);
+    urlDatabase = urlsForUser(req.session.userId,urlDatabase);
     let shortUrl = req.params.shortURL;
     res.redirect(`/urls/${shortUrl}`);
   } else {
@@ -164,7 +151,7 @@ app.post("/login", (req, res) => {
     res.send("status code 403 : user email is not registered ");
   } else if (bcrypt.compareSync(LogInPassword, users[id].password)) {
     req.session.userId = id;
-    urlDatabase = urlsForUser(id);
+    urlDatabase = urlsForUser(id,urlDatabase);
     res.redirect('/urls');
   } else {
     res.send("status code :403");
@@ -173,7 +160,6 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   urlDatabase = urlDatabaseALL;
-  //res.clearCookie('userId');
   delete req.session.userId;
   res.redirect('/urls');
 });
@@ -181,14 +167,13 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const RegisteredPassword = req.body.password;
-  const password = bcrypt.hashSync(RegisteredPassword, 10);
-  const id = generateRandomString(10);
+  const password = bcrypt.hashSync(RegisteredPassword, 10); // using bcrypt to encript the password
+  const id = generateRandomString(10); 
   const findemail = getUserByEmail(email, users);
   if (email !== "" && password !== "" && !findemail) {
     let userobj = {id: id, email: email, password: password};
     users[id] = userobj;
     req.session.userId = id;
-    //res.cookie('userId',id);
     res.redirect('/urls');
   } else {
     res.send("Error : status code 400");
