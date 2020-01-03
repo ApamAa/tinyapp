@@ -3,7 +3,7 @@ const express = require("express");
 const {getUserByEmail,urlsForUser,generateRandomString,fixURL} = require('./helpers'); // requiring all the modules from helper file
 const cookieSession = require('cookie-session');
 const app = express();
-const PORT = 3000;
+const PORT = 8080;
 const bcrypt = require('bcrypt');
 const bodyParser = require("body-parser");
 app.use(cookieSession({
