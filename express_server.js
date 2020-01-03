@@ -1,18 +1,17 @@
 // initial set-up, package requiremnt, helper functions etc
 const express = require("express");
-const {getUserByEmail,urlsForUser,generateRandomString} = require('./helpers'); // requiring all the modules from helper file
+const {getUserByEmail,urlsForUser,generateRandomString,fixURL} = require('./helpers'); // requiring all the modules from helper file
 const cookieSession = require('cookie-session');
 const app = express();
-const PORT = 8080;
+const PORT = 3000;
 const bcrypt = require('bcrypt');
+const bodyParser = require("body-parser");
 app.use(cookieSession({
   name: 'session',
   keys: ['P'],
   maxAge: 24 * 60 * 60 * 1000
 }));
-
 app.set("view engine", "ejs");
-const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 // dummy urlDatabase
@@ -20,7 +19,6 @@ let urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
-const urlDatabaseALL = urlDatabase;
 
 // dummy user-database
 const users = {
@@ -37,7 +35,7 @@ const users = {
 };
 
 
-// post request to /urls 
+// get request to /urls
 app.get("/urls", (req, res) => {
   if (typeof users[req.session.userId] !== "undefined") {
     let templateVars = {
@@ -53,9 +51,9 @@ app.get("/urls", (req, res) => {
 // get request to home /
 app.get("/", (req, res) => {
   if (typeof users[req.session.userId] !== "undefined") {
-    res.redirect("/urls")
+    res.redirect("/urls");
   } else {
-   res.redirect("/login"); 
+    res.redirect("/login");
   }
   
 });
@@ -112,14 +110,13 @@ app.get("/login", (req, res) => {
 
 app.post('/urls', (req, res) => {
   let newShortUrl = generateRandomString(6);
-  urlDatabase[newShortUrl] = {longURL : 'http://' + req.body.longURL,
+  urlDatabase[newShortUrl] = {longURL : fixURL(req.body.longURL),
     userID : req.session.userId};
-    res.redirect(`/urls/${newShortUrl}`);
+  res.redirect(`/urls/${newShortUrl}`);
 });
 
 app.post('/urls/:shortURL/delete',(req, res) => {
   if (typeof users[req.session.userId] !== "undefined") {
-    urlDatabase = urlsForUser(req.session.userId,urlDatabase);
     delete urlDatabase[req.params.shortURL];
     res.redirect("/urls");
   } else {
@@ -128,14 +125,13 @@ app.post('/urls/:shortURL/delete',(req, res) => {
 });
 
 app.post("/urls/:shortURL/update", (req, res) => {
-  let longURL = 'http://' + req.body.editURL;
+  let longURL = fixURL(req.body.editURL);
   urlDatabase[req.params.shortURL] = {longURL:longURL , userID : req.session.userId};
   res.redirect('/urls');
 });
 
 app.post("/urls/:shortURL/edit", (req, res) => {
   if (typeof users[req.session.userId] !== "undefined") {
-    urlDatabase = urlsForUser(req.session.userId,urlDatabase);
     let shortUrl = req.params.shortURL;
     res.redirect(`/urls/${shortUrl}`);
   } else {
@@ -151,7 +147,6 @@ app.post("/login", (req, res) => {
     res.send("status code 403 : user email is not registered ");
   } else if (bcrypt.compareSync(LogInPassword, users[id].password)) {
     req.session.userId = id;
-    urlDatabase = urlsForUser(id,urlDatabase);
     res.redirect('/urls');
   } else {
     res.send("status code :403");
@@ -159,7 +154,6 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  urlDatabase = urlDatabaseALL;
   delete req.session.userId;
   res.redirect('/urls');
 });
@@ -168,7 +162,7 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const RegisteredPassword = req.body.password;
   const password = bcrypt.hashSync(RegisteredPassword, 10); // using bcrypt to encript the password
-  const id = generateRandomString(10); 
+  const id = generateRandomString(10);
   const findemail = getUserByEmail(email, users);
   if (email !== "" && password !== "" && !findemail) {
     let userobj = {id: id, email: email, password: password};

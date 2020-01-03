@@ -29,4 +29,12 @@ const urlsForUser =  function(id,database) {
   return filteredURLS;
 };
 
-module.exports = {getUserByEmail,urlsForUser,generateRandomString};
+const fixURL = function(url) {
+  if (url.indexOf("http://") === 0) {
+    return url;
+  } else {
+    return "http://" + url;
+  }
+};
+
+module.exports = {getUserByEmail,urlsForUser,generateRandomString,fixURL};
